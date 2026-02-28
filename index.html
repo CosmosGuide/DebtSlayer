@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debt-Slayer SaaS</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .progress-bar { transition: width 0.5s ease-in-out; }
+        .debt-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen p-4 font-sans">
+
+    <header class="max-w-md mx-auto mb-8 text-center">
+        <h1 class="text-3xl font-bold text-yellow-400 mb-2">⚔️ DEBT SLAYER</h1>
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <p class="text-slate-400 text-sm uppercase tracking-widest">Total Debt Remaining</p>
+            <p id="totalDebt" class="text-4xl font-black text-red-500">$0</p>
+        </div>
+    </header>
+
+    <section class="max-w-md mx-auto mb-8 bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+        <h2 class="text-xl font-semibold mb-4 text-blue-400 italic">New Quest: Add EMI</h2>
+        <div class="space-y-3">
+            <input id="debtName" type="text" placeholder="Debt Name (e.g. Car Loan)" class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg focus:outline-none focus:border-yellow-400">
+            <input id="totalAmount" type="number" placeholder="Total Outstanding Amount" class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg focus:outline-none focus:border-yellow-400">
+            <input id="emiAmount" type="number" placeholder="Monthly EMI" class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg focus:outline-none focus:border-yellow-400">
+            <input id="phoneNumber" type="tel" placeholder="Bank/Contact Mobile No." class="w-full bg-slate-900 border border-slate-600 p-3 rounded-lg focus:outline-none focus:border-yellow-400">
+            <button onclick="addDebt()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 rounded-lg transition-all active:scale-95">
+                FORGE DEBT 🛠️
+            </button>
+        </div>
+    </section>
+
+    <main id="debtContainer" class="max-w-md mx-auto space-y-4 pb-20">
+        </main>
+
+    <script>
+        let debts = JSON.parse(localStorage.getItem('myDebts')) || [];
+
+        function render() {
+            const container = document.getElementById('debtContainer');
+            const totalDisplay = document.getElementById('totalDebt');
+            container.innerHTML = '';
+            let total = 0;
+
+            debts.forEach((debt, index) => {
+                total += parseFloat(debt.total);
+                const progress = ((debt.initial - debt.total) / debt.initial) * 100;
+                
+                container.innerHTML += `
+                    <div class="debt-card bg-slate-800 border-l-4 border-yellow-500 p-4 rounded-r-xl shadow-lg transition-all">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold text-lg">${debt.name}</h3>
+                                <p class="text-xs text-slate-400">📞 ${debt.phone}</p>
+                            </div>
+                            <span class="text-yellow-500 font-mono font-bold">$${debt.total}</span>
+                        </div>
+                        
+                        <div class="w-full bg-slate-700 h-2 rounded-full mb-4">
+                            <div class="progress-bar bg-green-500 h-2 rounded-full" style="width: ${progress}%"></div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="payEmi(${index})" class="flex-1 bg-green-600 hover:bg-green-500 text-xs py-2 rounded font-bold uppercase tracking-tighter">Pay EMI (-$${debt.emi})</button>
+                            <button onclick="slayDebt(${index})" class="bg-red-900 hover:bg-red-700 px-3 py-2 rounded text-xs">SLAY 💀</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            totalDisplay.innerText = `$${total.toLocaleString()}`;
+            localStorage.setItem('myDebts', JSON.stringify(debts));
+        }
+
+        function addDebt() {
+            const name = document.getElementById('debtName').value;
+            const total = document.getElementById('totalAmount').value;
+            const emi = document.getElementById('emiAmount').value;
+            const phone = document.getElementById('phoneNumber').value;
+
+            if(!name || !total) return alert("Fill in the quest details!");
+
+            debts.push({ name, total, emi, phone, initial: total });
+            render();
+            
+            // Clear inputs
+            document.querySelectorAll('input').forEach(i => i.value = '');
+        }
+
+        function payEmi(index) {
+            if (debts[index].total > 0) {
+                debts[index].total = Math.max(0, debts[index].total - debts[index].emi);
+                if (debts[index].total === 0) {
+                    celebrate();
+                }
+                render();
+            }
+        }
+
+        function slayDebt(index) {
+            if(confirm("Confirm this debt is destroyed forever?")) {
+                celebrate();
+                debts.splice(index, 1);
+                render();
+            }
+        }
+
+        function celebrate() {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#EAB308', '#22C55E', '#FFFFFF']
+            });
+        }
+
+        render();
+    </script>
+</body>
+</html>
